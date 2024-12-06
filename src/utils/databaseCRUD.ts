@@ -1,54 +1,122 @@
-import { AppDataSource } from "../config/database";
-import { TestEntity } from "../entities/testEntity";
+import { Pinecone } from "@pinecone-database/pinecone";
 
+export async function saveVectorToPinecone(songId: number, vector: number[], namespace:string): Promise<boolean> {
+    // Initialize Pinecone client
+    const apiKey = process.env.PINECONE_API_KEY;
+    const indexName = process.env.PINECONE_INDEX_NAME;
+    
+    if (apiKey && indexName) {
+        try {
+            const pc = new Pinecone({ apiKey: apiKey});
+        
+            // Target the index where you'll store the vector embeddings
+            const index = pc.index(indexName);
 
-export async function createTestEntity(value: string): Promise<Boolean> {
-    !AppDataSource.isInitialized ? await AppDataSource.initialize() : null;
-    const testEntity = new TestEntity();
-    testEntity.value = value;
-    const assignedId = await AppDataSource.getRepository(TestEntity).save(testEntity);
+            // Upsert the vectors into the index
+            await index.namespace(namespace || "").upsert([{
+                id: songId.toString(),
+                values: vector,
+            }])
 
-    if (assignedId) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-export async function readTestEntity(id: number): Promise<TestEntity | null> {
-    !AppDataSource.isInitialized ? await AppDataSource.initialize() : null;
-    const testEntity = await AppDataSource.getRepository(TestEntity).findOne({ where: { id } });
-
-    if (testEntity) {
-        return testEntity;
-    } else {
-        return null;
-    }
-}
-
-export async function updateTestEntity(id: number, value: string): Promise<Boolean> {
-    !AppDataSource.isInitialized ? await AppDataSource.initialize() : null;
-    const testEntity = await AppDataSource.getRepository(TestEntity).findOne({ where: { id } });
-
-    if (testEntity) {
-        testEntity.value = value;
-        const assignedId = await AppDataSource.getRepository(TestEntity).save(testEntity);
-        if (assignedId) {
             return true;
+        } catch (error) {
+            console.error(error);
+            
         }
+        
     }
     return false;
-}
+};
 
-export async function deleteTestEntity(id: number): Promise<Boolean> {
-    !AppDataSource.isInitialized ? await AppDataSource.initialize() : null;
-    const testEntity = await AppDataSource.getRepository(TestEntity).findOne({ where: { id } });
+export async function saveVectorWithMetadataToPinecone(songId: number, vector: number[], metadata: any, namespace: string): Promise<boolean> {
+    // Initialize Pinecone client
+    const apiKey = process.env.PINECONE_API_KEY;
+    const indexName = process.env.PINECONE_INDEX_NAME;
+    
+    if (apiKey && indexName) {
+        try {
+            const pc = new Pinecone({ apiKey: apiKey});
+        
+            // Target the index where you'll store the vector embeddings
+            const index = pc.index(indexName);
 
-    if (testEntity) {
-        const deletedEntity = await AppDataSource.getRepository(TestEntity).delete(id);
-        if (deletedEntity) {
+            // Upsert the vectors into the index
+            await index.namespace(namespace || "").upsert([{
+                id: songId.toString(),
+                values: vector,
+                metadata: metadata
+            }])
+
             return true;
+        } catch (error) {
+            console.error(error);
+            
         }
+        
     }
     return false;
+};
+
+
+export async function searchForSimilarVectors(inputVector: number[], namespace: string): Promise<number[]> {
+    // Initialize Pinecone client
+    const apiKey = process.env.PINECONE_API_KEY;
+    const indexName = process.env.PINECONE_INDEX_NAME;
+
+    if (apiKey && indexName) {
+        try {
+            const pc = new Pinecone({ apiKey: apiKey });
+        
+            // Target the index where you'll store the vector embeddings
+            const index = pc.index(indexName);
+
+            // Perform similarity search
+            const searchResults = await index.namespace(namespace || "").query({
+                vector: inputVector,
+                topK: 5,
+                includeMetadata: true,
+                
+            });
+
+            if (searchResults?.matches?.length > 0) {
+                return searchResults.matches.map((match: any) => parseInt(match.id));
+            }
+            
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    return [];
+}
+
+
+export async function getVectorById(id: number, namespace: string): Promise<number[]> {
+    // Initialize Pinecone client
+    const apiKey = process.env.PINECONE_API_KEY;
+    const indexName = process.env.PINECONE_INDEX_NAME;
+
+    if (apiKey && indexName) {
+        try {
+            const pc = new Pinecone({ apiKey: apiKey });
+        
+            // Target the index where you'll store the vector embeddings
+            const index = pc.index(indexName);
+
+            // Perform similarity search
+            const searchResults = await index.namespace(namespace || "").query({
+                id: id.toString(),
+                topK: 1,
+                includeMetadata: true,
+                
+            });
+
+            if (searchResults?.matches?.length > 0) {
+                return searchResults.matches.map((match: any) => parseInt(match.id));
+            }
+            
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    return [];
 }
