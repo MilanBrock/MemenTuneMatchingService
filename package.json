@@ -22,7 +22,7 @@
   "dependencies": {
     "@pinecone-database/pinecone": "^4.0.0",
     "amqplib": "^0.10.4",
-    "express": "^4.19.2",
+    "express": "^4.21.2",
     "openai": "^4.53.0",
     "pg": "^8.12.0",
     "typeorm": "^0.3.20"
