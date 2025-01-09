@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@pinecone-database/pinecone": "^4.0.0",
+    "@supabase/supabase-js": "^2.47.12",
     "amqplib": "^0.10.4",
     "express": "^4.19.2",
     "openai": "^4.53.0",

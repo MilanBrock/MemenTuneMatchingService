@@ -1,4 +1,5 @@
 import { Pinecone } from "@pinecone-database/pinecone";
+import { SongSubmission } from "../middlewares/interfaces";
 
 export async function saveVectorToPinecone(songId: number, vector: number[], namespace:string): Promise<boolean> {
     // Initialize Pinecone client
@@ -28,7 +29,7 @@ export async function saveVectorToPinecone(songId: number, vector: number[], nam
     return false;
 };
 
-export async function saveVectorWithMetadataToPinecone(songId: number, vector: number[], metadata: any, namespace: string): Promise<boolean> {
+export async function saveVectorWithMetadataToPinecone(songSubmission: SongSubmission, namespace: string): Promise<boolean> {
     // Initialize Pinecone client
     const apiKey = process.env.PINECONE_API_KEY;
     const indexName = process.env.PINECONE_INDEX_NAME;
@@ -42,9 +43,9 @@ export async function saveVectorWithMetadataToPinecone(songId: number, vector: n
 
             // Upsert the vectors into the index
             await index.namespace(namespace || "").upsert([{
-                id: songId.toString(),
-                values: vector,
-                metadata: metadata
+                id: "1",
+                values: songSubmission.songDescriptionEmbed,
+                metadata: {userId: songSubmission.userId, songDescription: songSubmission.songDescription, songLink: songSubmission.songLink}
             }])
 
             return true;
@@ -73,7 +74,7 @@ export async function searchForSimilarVectors(inputVector: number[], namespace: 
             // Perform similarity search
             const searchResults = await index.namespace(namespace || "").query({
                 vector: inputVector,
-                topK: 5,
+                topK: 3,
                 includeMetadata: true,
                 
             });
@@ -107,11 +108,15 @@ export async function getVectorById(id: number, namespace: string): Promise<numb
                 id: id.toString(),
                 topK: 1,
                 includeMetadata: true,
-                
+                includeValues: true
             });
 
+
             if (searchResults?.matches?.length > 0) {
-                return searchResults.matches.map((match: any) => parseInt(match.id));
+                const match = searchResults.matches.find((match: any) => match.id === id.toString());
+                if (match) {
+                    return match.values; 
+                }
             }
             
         } catch (error) {

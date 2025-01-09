@@ -1,10 +1,12 @@
 // src/routes/users.ts
 import { Router } from 'express';
-import { SimilaritySearch, } from '../controllers/mainController';
+import { saveSongVector, saveUserVector, SimilaritySearch, } from '../controllers/mainController';
 
 const router = Router();
 
 router.post("/similarity", SimilaritySearch)
+router.post("/savesong", saveSongVector)
+router.post("/saveuser", saveUserVector)
 
 
 export default router;
