@@ -1,5 +1,6 @@
 import { publishEvent, consumeEvent } from '../config/messagequeue';
-import { saveVectorToPinecone, saveVectorWithMetadataToPinecone } from './databaseCRUD';
+import { SongSubmission } from '../middlewares/interfaces';
+import { saveVectorToPinecone, saveVectorWithMetadataToPinecone } from './pinecone';
 
 
 // Events to post
@@ -11,8 +12,8 @@ export async function listenToSongEmbeddedEvent() {
   await consumeEvent('song', 'DescriptionEmbedded', async (msg) => {
     if (msg) {
         console.log('A new song has been submitted, saving the song embedding');
-        const { songId, songDescriptionEmbed, metadata } = JSON.parse(msg.content.toString());
-        const succes = await saveVectorWithMetadataToPinecone(songId, songDescriptionEmbed, metadata, "song");
+        const songSubmission: SongSubmission = JSON.parse(msg.content.toString());
+        const succes = await saveVectorWithMetadataToPinecone(songSubmission, "song");
         if (succes) {
           console.log('Song embedding has been saved');
         } else {
