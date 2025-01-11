@@ -2,6 +2,7 @@
 import e, { Request, Response } from 'express';
 import { getVectorById, saveVectorToPinecone, searchForSimilarVectors } from '../utils/pinecone';
 import { SaveSongVectorToSupabase, SaveUserVectorToSupabase, SimilaritySearchSupabase } from '../utils/supabase';
+import { register } from '../utils/metrics';
 
 
 export const SimilaritySearch = async (req: Request, res: Response) => {
@@ -74,3 +75,14 @@ export const saveUserVector = async (req: Request, res: Response) => {
         res.status(500).json({message:"Unable to save user"});
     }
 }
+
+
+export const getMetrics = async (req: Request, res: Response) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.status(200).send(await register.metrics());
+    } catch (err) {
+        console.error('Failed to get metrics', err);
+        res.status(500).json({ message: 'Unable to retrieve metrics', error: err });
+    }
+};

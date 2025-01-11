@@ -4,6 +4,7 @@ import express from 'express';
 import { connectDB } from './config/database';
 import mainRoutes from './routes/main';
 import { connectMessageQueue } from './config/messagequeue';
+import metricsMiddleware from './middlewares/requestTimers';
 
 
 
@@ -22,6 +23,9 @@ if (process.env.MESSAGE_QUEUE_ENABLE === "1") {
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+
+// Track metrics
+app.use(metricsMiddleware);
 
 // Routes
 app.use('/matching', mainRoutes);
